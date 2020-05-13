@@ -121,25 +121,25 @@ const CalculatorScreen = () => {
   return (
     <View style={styles.container}>
       <Input
-        placeholder='lp1'
+        placeholder='Enter latitude for point 1'
         errorMessage={getErrorMessage(state.latP1)}
         onChangeText={(val) => updateStateObject({ latP1: val })}
         value={state.latP1}
       />
       <Input
-        placeholder='lop1'
+        placeholder='Enter longitude for point 1'
         errorMessage={getErrorMessage(state.longP1)}
         onChangeText={(val) => updateStateObject({ longP1: val })}
         value={state.longP1}
       />
       <Input
-        placeholder='lp2'
+        placeholder='Enter latitude for point 2'
         errorMessage={getErrorMessage(state.latP2)}
         onChangeText={(val) => updateStateObject({ latP2: val })}
         value={state.latP2}
       />
       <Input
-        placeholder='lop2'
+        placeholder='Enter longitude for point 2'
         errorMessage={getErrorMessage(state.longP2)}
         onChangeText={(val) => updateStateObject({ longP2: val })}
         value={state.longP2}
