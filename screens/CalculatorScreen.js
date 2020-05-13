@@ -3,14 +3,16 @@ import { StyleSheet, Text, View, Keyboard } from 'react-native';
 import { Button, Input } from 'react-native-elements';
 
 const CalculatorScreen = () => {
-  const [state, setState] = useState({
+  const defaultState = {
     latP1: '',
     longP1: '',
     latP2: '',
     longP2: '',
     calculatedDistance: '',
     calculatedBearing: ''
-  });
+  };
+
+  const [state, setState] = useState(defaultState);
 
   const updateStateObject = (vals) => {
     setState({
@@ -30,14 +32,7 @@ const CalculatorScreen = () => {
   }
 
   const clearInputs = () => {
-    updateStateObject({
-      latP1: '',
-      longP1: '',
-      latP2: '',
-      longP2: '',
-      calculatedDistance: '',
-      calculatedBearing: ''
-    });
+    updateStateObject(defaultState);
 
     Keyboard.dismiss();
   }
@@ -86,10 +81,6 @@ const CalculatorScreen = () => {
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c;
     return `${round(d, 3)} km`;
-
-    // if (d > 1) return Math.round(d) + "km";
-    //else if (d <= 1) return Math.round(d * 1000) + "m";
-    // return d;
   }
 
 
