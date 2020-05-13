@@ -23,12 +23,16 @@ const CalculatorScreen = () => {
 
 
   const getErrorMessage = (val) => {
-    return isValidInput(val) ? "" : "Value must be a number";
+    return isValidNumber(val) ? "" : "Value must be a number";
   }
 
-  const isValidInput = (val) => {
+  const isValidNumber = (val) => {
     let n = Number(val);
     return !Number.isNaN(n);
+  }
+  
+  const isValidInput = (val) => {
+    return isValidNumber(val) && val != '';
   }
 
   const clearInputs = () => {
