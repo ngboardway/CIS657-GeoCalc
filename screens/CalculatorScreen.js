@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Keyboard } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, SafeAreaView, Keyboard, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import { Button, Input } from 'react-native-elements';
+import { Feather } from '@expo/vector-icons';
 
-const CalculatorScreen = () => {
-  const defaultState = {
+const CalculatorScreen = ({ route, navigation }) => {
+  const [state, setState] = useState({
     latP1: '',
     longP1: '',
     latP2: '',
     longP2: '',
     calculatedDistance: '',
-    calculatedBearing: ''
-  };
-
-  const [state, setState] = useState(defaultState);
+    calculatedBearing: '',
+    distanceUnit: 'Kilometers',
+    bearingUnit: 'Degrees'
+  });
 
   const updateStateObject = (vals) => {
-    setState({
-      ...state,
-      ...vals
-    });
+    let updated = Object.assign({}, state, vals);
+    console.log('Updated: ', updated);
+    setState(updated);
   };
 
 
@@ -30,13 +30,20 @@ const CalculatorScreen = () => {
     let n = Number(val);
     return !Number.isNaN(n);
   }
-  
+
   const isValidInput = (val) => {
     return isValidNumber(val) && val != '';
   }
 
   const clearInputs = () => {
-    updateStateObject(defaultState);
+    updateStateObject({
+      latP1: '',
+      longP1: '',
+      latP2: '',
+      longP2: '',
+      calculatedDistance: '',
+      calculatedBearing: ''
+    });
 
     Keyboard.dismiss();
   }
@@ -46,12 +53,12 @@ const CalculatorScreen = () => {
       || !isValidInput(state.latP2) || !isValidInput(state.longP2)) {
       return;
     } else {
-      let calculatedDistance = computeDistance(state.latP1, state.longP1, state.latP2, state.longP2);
-      let calculatedBearing = computeBearing(state.latP1, state.longP1, state.latP2, state.longP2);
+      let calculatedDistance = computeDistance(state.latP1, state.longP1, state.latP2, state.longP2, state.distanceUnit);
+      let calculatedBearing = computeBearing(state.latP1, state.longP1, state.latP2, state.longP2, state.bearingUnit);
 
       updateStateObject({
-        calculatedDistance: `Distance: ${calculatedDistance}`,
-        calculatedBearing: `Bearing: ${calculatedBearing}`
+        calculatedDistance,
+        calculatedBearing
       });
     }
   }
@@ -67,7 +74,7 @@ const CalculatorScreen = () => {
   }
 
   // Computes distance between two geo coordinates in kilometers.
-  const computeDistance = (lat1, lon1, lat2, lon2) => {
+  const computeDistance = (lat1, lon1, lat2, lon2, distanceUnit) => {
     console.log(`p1={${lat1},${lon1}} p2={${lat2},${lon2}}`);
 
     var R = 6371; // km (change this constant to get miles)
@@ -84,12 +91,16 @@ const CalculatorScreen = () => {
 
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c;
-    return `${round(d, 3)} km`;
+    if (distanceUnit == "Miles") {
+      d *= 0.621371;
+    }
+
+    return `${round(d, 3)} ${distanceUnit}`;
   }
 
 
   // Computes bearing between two geo coordinates in degrees.
-  const computeBearing = (startLat, startLng, destLat, destLng) => {
+  const computeBearing = (startLat, startLng, destLat, destLng, bearingUnit) => {
     startLat = toRadians(startLat);
     startLng = toRadians(startLng);
     destLat = toRadians(destLat);
@@ -104,8 +115,12 @@ const CalculatorScreen = () => {
     var brng = Math.atan2(y, x);
     brng = toDegrees(brng);
 
-    let degrees = (brng + 360) % 360;
-    return `${round(degrees, 3)} degrees`;
+    let bearing = (brng + 360) % 360;
+    if (bearingUnit == "Mils") {
+      bearing *= 17.777777777778;
+    }
+
+    return `${round(bearing, 3)} ${bearingUnit}`;
   }
 
 
@@ -113,53 +128,142 @@ const CalculatorScreen = () => {
     return Number(Math.round(value + "e" + decimals) + "e-" + decimals);
   }
 
+  navigation.setOptions({
+    headerRight: () => (
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('CalculatorSettings', { distanceUnit: state.distanceUnit, bearingUnit: state.bearingUnit })
+        }
+      >
+        <Feather style={{ marginRight: 10 }} name="settings" size={24} />
+      </TouchableOpacity >
+    )
+  });
+
+
+  useEffect(() => {
+    if (route.params?.distanceUnit) {
+      updateStateObject({ distanceUnit: route.params.distanceUnit });
+      calculate();
+    }
+
+    if (route.params?.bearingUnit) {
+      updateStateObject({ bearingUnit: route.params.bearingUnit });
+      calculate();
+    }
+  }, [route.params?.distanceUnit, route.params?.bearingUnit]);
+
   return (
-    <View style={styles.container}>
-      <Input
-        placeholder='Enter latitude for point 1'
-        errorMessage={getErrorMessage(state.latP1)}
-        onChangeText={(val) => updateStateObject({ latP1: val })}
-        value={state.latP1}
-      />
-      <Input
-        placeholder='Enter longitude for point 1'
-        errorMessage={getErrorMessage(state.longP1)}
-        onChangeText={(val) => updateStateObject({ longP1: val })}
-        value={state.longP1}
-      />
-      <Input
-        placeholder='Enter latitude for point 2'
-        errorMessage={getErrorMessage(state.latP2)}
-        onChangeText={(val) => updateStateObject({ latP2: val })}
-        value={state.latP2}
-      />
-      <Input
-        placeholder='Enter longitude for point 2'
-        errorMessage={getErrorMessage(state.longP2)}
-        onChangeText={(val) => updateStateObject({ longP2: val })}
-        value={state.longP2}
-      />
-      <Button
-        title='Calculate'
-        onPress={calculate}
-        style={styles.button} />
-      <Button
-        title='Clear'
-        onPress={clearInputs}
-        style={styles.button} />
-      <Text>{state.calculatedDistance}</Text>
-      <Text>{state.calculatedBearing}</Text>
-    </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container} >
+        <View style={styles.container}>
+          <Text>{state.distanceUnit}</Text>
+          <Input
+            placeholder='Enter latitude for point 1'
+            errorMessage={getErrorMessage(state.latP1)}
+            onChangeText={(val) => updateStateObject({ latP1: val })}
+            value={state.latP1}
+          />
+          <Input
+            placeholder='Enter longitude for point 1'
+            errorMessage={getErrorMessage(state.longP1)}
+            onChangeText={(val) => updateStateObject({ longP1: val })}
+            value={state.longP1}
+          />
+          <Input
+            placeholder='Enter latitude for point 2'
+            errorMessage={getErrorMessage(state.latP2)}
+            onChangeText={(val) => updateStateObject({ latP2: val })}
+            value={state.latP2}
+          />
+          <Input
+            placeholder='Enter longitude for point 2'
+            errorMessage={getErrorMessage(state.longP2)}
+            onChangeText={(val) => updateStateObject({ longP2: val })}
+            value={state.longP2}
+          />
+          <TouchableOpacity
+            onPress={calculate}
+            style={styles.button}>
+            <Text>Calculate</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={clearInputs}
+            style={styles.button}>
+            <Text style={{ backgroundColor: '#457D5A' }}>Clear</Text>
+
+          </TouchableOpacity>
+
+          <View class={styles.flexTable}>
+            <View style={styles.row}>
+              <View style={styles.topLeftCol}>
+                <Text>Distance: </Text>
+              </View>
+              <View style={styles.topRightCol}>
+                <Text>{state.calculatedDistance}</Text>
+              </View>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.bottomLeftCol}>
+                <Text>Bearing: </Text>
+              </View>
+              <View style={styles.bottomRightCol}>
+                <Text>{state.calculatedBearing}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 
 };
 
+const viewColumn = {
+  flex: 2,
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderRightWidth: 1,
+  borderRightColor: 'black',
+  borderTopWidth: 1,
+  borderTopColor: 'black',
+  padding: 10
+};
+
 const styles = StyleSheet.create({
   container: {
-    margin: 20
+    margin: 20,
   },
   button: {
-    margin: 10
+    margin: 10,
+  },
+  flexTable: {
+    flex: 1,
+    margin: 20
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  topLeftCol: {
+    ...viewColumn,
+    borderLeftWidth: 1,
+    borderLeftColor: 'black',
+  },
+  topRightCol: {
+    ...viewColumn,
+  },
+  bottomLeftCol: {
+    ...viewColumn,
+    borderBottomWidth: 1,
+    borderBottomColor: 'black',
+    borderLeftWidth: 1,
+    borderLeftColor: 'black'
+  },
+  bottomRightCol: {
+    ...viewColumn,
+    borderBottomWidth: 1,
+    borderBottomColor: 'black'
   }
 });
 
