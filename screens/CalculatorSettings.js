@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Keyboard, TouchableOpacity } from 'react-native';
-import { Button, Input } from 'react-native-elements';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Dropdown } from 'react-native-material-dropdown';
 
 
 const CalculatorSettingsScreen = ({ route, navigation }) => {
-
   const { distanceUnit: initialDistanceUnit, bearingUnit: initialBearingUnit } = route.params;
 
   const [distanceUnit, setDistanceUnit] = useState(initialDistanceUnit);
@@ -48,7 +46,6 @@ const CalculatorSettingsScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text>{distanceUnit}</Text>
       <Dropdown
         label='Distance Units'
         data={distanceUnits}
