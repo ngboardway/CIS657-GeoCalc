@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, Keyboard, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, Keyboard, TouchableWithoutFeedback, TouchableOpacity, AsyncStorage } from 'react-native';
 import { Button, Input } from 'react-native-elements';
 import { Feather } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-community/async-storage';
 
 const CalculatorScreen = ({ route, navigation }) => {
   /* state functions */
@@ -18,16 +17,10 @@ const CalculatorScreen = ({ route, navigation }) => {
   });
 
   const updateStateObject = (vals) => {
-    console.log('State: ', state);
-    console.log('Vals: ', vals);
-
-    let updated = {
+    setState({
       ...state,
       ...vals
-    };
-
-    console.log('Updated: ', updated)
-    setState(updated);
+    });
   };
 
   /* input validation functions */
@@ -100,14 +93,21 @@ const CalculatorScreen = ({ route, navigation }) => {
     try {
       await AsyncStorage.setItem(key, value)
     } catch (e) {
+      console.log(e);
     }
   }
 
   useEffect(() => {
-    let distanceUnit = getFromStorage('distance-unit');
-    let bearingUnit = getFromStorage('bearing-unit')
-    this.updateStateObject({ distanceUnit, bearingUnit });
-  })
+    async function getData() {
+      let distanceUnit = await getFromStorage('distance-unit');
+      let bearingUnit = await getFromStorage('bearing-unit');
+
+      if (distanceUnit != null && bearingUnit != null) {
+        updateStateObject({ distanceUnit, bearingUnit })
+      }
+    }
+    getData();
+  }, [])
 
   useEffect(() => {
     if (route.params?.distanceUnit || route.params?.bearingUnit) {
