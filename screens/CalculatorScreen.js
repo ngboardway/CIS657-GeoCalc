@@ -23,8 +23,8 @@ const CalculatorScreen = ({ route, navigation }) => {
     });
   };
 
+  /*----------------------------------------------------------------------------*/
   /* input validation functions */
-
   const getErrorMessage = (val) => {
     return isValidNumber(val) ? "" : "Value must be a number";
   }
@@ -80,6 +80,7 @@ const CalculatorScreen = ({ route, navigation }) => {
   });
 
 
+  /*----------------------------------------------------------------------------*/
   /* lifecycle hooks */
   getFromStorage = async (key) => {
     try {
@@ -183,6 +184,7 @@ const CalculatorScreen = ({ route, navigation }) => {
   );
 };
 
+/*----------------------------------------------------------------------------*/
 /* calculation helper function */
 
 // Converts from degrees to radians.
