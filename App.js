@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet } from 'react-native';
 import CalculatorScreen from './screens/CalculatorScreen';
 import CalculatorSettingsScreen from './screens/CalculatorSettings';
 import { NavigationContainer } from '@react-navigation/native'

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Dropdown } from 'react-native-material-dropdown';
 
-
 const CalculatorSettingsScreen = ({ route, navigation }) => {
   const { distanceUnit: initialDistanceUnit, bearingUnit: initialBearingUnit } = route.params;
 
