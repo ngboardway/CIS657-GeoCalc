@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet } from 'react-native';
 import CalculatorScreen from './screens/CalculatorScreen';
+import CalculatorHistory from './screens/CalculatorHistory';
 import CalculatorSettingsScreen from './screens/CalculatorSettings';
 import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack';
@@ -27,8 +28,11 @@ export default function App() {
           name="Calculator"
           component={CalculatorScreen} />
         <Stack.Screen
-          name="CalculatorSettings"
+          name="Calculator Settings"
           component={CalculatorSettingsScreen} />
+        <Stack.Screen
+          name="Calculator History"
+          component={CalculatorHistory} />
       </Stack.Navigator>
     </NavigationContainer >
   );

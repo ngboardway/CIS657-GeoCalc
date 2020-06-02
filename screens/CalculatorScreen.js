@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, Keyboard, TouchableWithoutFeedback, TouchableOpacity, AsyncStorage } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, Keyboard, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import { Button, Input } from 'react-native-elements';
 import { Feather } from '@expo/vector-icons';
+import { initCalculationDB, storeCalculation, setupCalculationListener } from '../data/fb-calculations';
 
 const CalculatorScreen = ({ route, navigation }) => {
   /* state functions */
@@ -11,9 +12,7 @@ const CalculatorScreen = ({ route, navigation }) => {
     latP2: '',
     longP2: '',
     calculatedDistance: '',
-    calculatedBearing: '',
-    distanceUnit: 'Kilometers',
-    bearingUnit: 'Degrees'
+    calculatedBearing: ''
   });
 
   const updateStateObject = (vals) => {
@@ -22,6 +21,11 @@ const CalculatorScreen = ({ route, navigation }) => {
       ...vals
     });
   };
+
+  const [calculations, setCalculations] = useState([]);
+  const [distanceUnit, setDistanceUnit] = useState('Kilometers');
+  const [bearingUnit, setBearingUnit] = useState('Degrees');
+
 
   /*----------------------------------------------------------------------------*/
   /* input validation functions */
@@ -63,15 +67,35 @@ const CalculatorScreen = ({ route, navigation }) => {
         calculatedDistance,
         calculatedBearing
       });
+
+      let calculation = {
+        startLat: latP1,
+        startLong: longP1,
+        endLat: latP2,
+        endLong: longP2,
+        timestamp: new Date().toDateString()
+      };
+
+      storeCalculation(calculation);
+      Keyboard.dismiss();
     }
   }
 
   /* navigation */
   navigation.setOptions({
+    headerLeft: () => (
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('Calculator History', { calculations })
+        }
+      >
+        <Text>History</Text>
+      </TouchableOpacity>
+    ),
     headerRight: () => (
       <TouchableOpacity
         onPress={() =>
-          navigation.navigate('CalculatorSettings', { distanceUnit: state.distanceUnit, bearingUnit: state.bearingUnit })
+          navigation.navigate('Calculator Settings', { distanceUnit: distanceUnit, bearingUnit: bearingUnit })
         }
       >
         <Feather style={{ marginRight: 10 }} name="settings" size={24} />
@@ -82,43 +106,41 @@ const CalculatorScreen = ({ route, navigation }) => {
 
   /*----------------------------------------------------------------------------*/
   /* lifecycle hooks */
-  getFromStorage = async (key) => {
-    try {
-      return await AsyncStorage.getItem(key);
-    } catch (e) {
-      return '';
-    }
-  }
 
-  saveToStorage = async (key, value) => {
+  useEffect(() => {
     try {
-      await AsyncStorage.setItem(key, value)
+      initCalculationDB();
     } catch (e) {
       console.log(e);
     }
-  }
 
-  useEffect(() => {
-    async function getData() {
-      let distanceUnit = await getFromStorage('distance-unit');
-      let bearingUnit = await getFromStorage('bearing-unit');
+    setupCalculationListener((history) => {
+      setCalculations(history)
+    })
 
-      if (distanceUnit != null && bearingUnit != null) {
-        updateStateObject({ distanceUnit, bearingUnit })
-      }
-    }
-    getData();
   }, [])
 
   useEffect(() => {
     if (route.params?.distanceUnit || route.params?.bearingUnit) {
       const { distanceUnit, bearingUnit } = route.params;
-      updateStateObject({ distanceUnit, bearingUnit });
+
+      setDistanceUnit(distanceUnit);
+      setBearingUnit(bearingUnit)
+
       calculate(state.latP1, state.longP1, state.latP2, state.longP2, distanceUnit, bearingUnit);
-      saveToStorage('distance-unit', distanceUnit);
-      saveToStorage('bearing-unit', bearingUnit);
     }
-  }, [route.params?.distanceUnit, route.params?.bearingUnit]);
+    if (route.params?.startLat || route.params?.startLong ||
+      route.params?.endLat || route.params?.endLong) {
+      updateStateObject({
+        latP1: route.params.startLat,
+        longP1: route.params.startLong,
+        latP2: route.params.endLat,
+        longP2: route.params.endLong
+      })
+    }
+  }, [route.params?.distanceUnit, route.params?.bearingUnit,
+  route.params?.startLat, route.params?.startLong,
+  route.params?.endLat, route.params?.endLong]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -152,7 +174,7 @@ const CalculatorScreen = ({ route, navigation }) => {
             buttonStyle={styles.button}
             title="Calculate"
             onPress={() => {
-              calculate(state.latP1, state.longP1, state.latP2, state.longP2, state.distanceUnit, state.bearingUnit)
+              calculate(state.latP1, state.longP1, state.latP2, state.longP2, distanceUnit, bearingUnit)
             }} />
 
           <Button
