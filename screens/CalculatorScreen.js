@@ -1,7 +1,8 @@
-import React, { useState, useRef,   useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { StyleSheet, Text, Keyboard, TouchableOpacity, View, TouchableWithoutFeedback } from "react-native";
 import { Button, Input } from "react-native-elements";
 import { Feather } from "@expo/vector-icons";
+import { initCalculationDB, storeCalculation, setupCalculationListener } from '../data/fb-calculations';
 
 const CalculatorScreen = ({ route, navigation }) => {
   const [state, setState] = useState({
@@ -12,18 +13,45 @@ const CalculatorScreen = ({ route, navigation }) => {
     distance: "",
     bearing: "",
   });
+
   const [bearingUnits, setBearingUnits] = useState("Degrees");
   const [distanceUnits, setDistanceUnits] = useState("Kilometers");
+  const [history, setHistory] = useState([]);
 
   const initialField = useRef(null);
 
   useEffect(() => {
-    if (route.params?.selectedDistanceUnits) {
+    if (route.params?.selectedDistanceUnits || route.params?.selectedBearingUnits) {
       setDistanceUnits(route.params.selectedDistanceUnits);
       setBearingUnits(route.params.selectedBearingUnits);
       doCalculation(route.params.selectedDistanceUnits, route.params.selectedBearingUnits);
     }
-  }, [route.params?.selectedDistanceUnits]);
+
+    if (route.params?.startLat) {
+      updateStateObject({
+        lat1: route.params.startLat,
+        lon1: route.params.startLong,
+        lat2: route.params.endLat,
+        lon2: route.params.endLong
+      })
+    }
+  }, [route.params?.selectedDistanceUnits, route.params?.selectedBearingUnits, route.params?.startLat]);
+
+  const comparator = (item1, item2) => {
+    return item1.timestamp < item2.timestamp;
+  };
+
+  useEffect(() => {
+    try {
+      initCalculationDB();
+    } catch (e) {
+      console.log(e);
+    }
+
+    setupCalculationListener((calculations) => {
+      setHistory(calculations.sort(comparator));
+    })
+  }, []);
 
   // Converts from degrees to radians.
   function toRadians(degrees) {
@@ -38,15 +66,15 @@ const CalculatorScreen = ({ route, navigation }) => {
   // Computes distance between two geo coordinates in kilometers.
   function computeDistance(lat1, lon1, lat2, lon2) {
     console.log(`p1={${lat1},${lon1}} p2={${lat2},${lon2}}`);
-    var R = 6371; 
+    var R = 6371;
     var dLat = ((lat2 - lat1) * Math.PI) / 180;
     var dLon = ((lon2 - lon1) * Math.PI) / 180;
     var a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c;
     return d;
@@ -79,14 +107,14 @@ const CalculatorScreen = ({ route, navigation }) => {
   function formValid(vals) {
     if (isNaN(vals.lat1) || isNaN(vals.lon1) || isNaN(vals.lat2) || isNaN(vals.lon2)) {
       return false;
-    } else if (vals.lat1 === '' || vals.lon1 === '' || vals.lat2==='' || vals.lon2==='') {
+    } else if (vals.lat1 === '' || vals.lon1 === '' || vals.lat2 === '' || vals.lon2 === '') {
       return false;
     } else {
       return true;
     }
   }
 
-  function doCalculation(dUnits,bUnits) {
+  function doCalculation(dUnits, bUnits) {
     if (formValid(state)) {
       var p1 = {
         lat: parseFloat(state.lat1),
@@ -99,12 +127,23 @@ const CalculatorScreen = ({ route, navigation }) => {
 
       var dist = computeDistance(p1.lat, p1.lon, p2.lat, p2.lon);
       var bear = computeBearing(p1.lat, p1.lon, p2.lat, p2.lon);
-      const dConv = dUnits==='Kilometers' ? 1.0 :  0.621371;
+      const dConv = dUnits === 'Kilometers' ? 1.0 : 0.621371;
       const bConv = bUnits === 'Degrees' ? 1.0 : 17.777777777778;
+
       updateStateObject({
-        distance: `${round(dist*dConv,3)} ${dUnits}`,
-        bearing: `${round(bear*bConv, 3)} ${bUnits}`,
+        distance: `${round(dist * dConv, 3)} ${dUnits}`,
+        bearing: `${round(bear * bConv, 3)} ${bUnits}`,
       });
+
+      const calculation = {
+        startLat: p1.lat,
+        startLong: p1.lon,
+        endLat: p2.lat,
+        endLong: p2.lon,
+        timestamp: new Date().toString()
+      };
+
+      storeCalculation(calculation);
     }
   }
 
@@ -116,6 +155,12 @@ const CalculatorScreen = ({ route, navigation }) => {
   };
 
   navigation.setOptions({
+    headerLeft: () => (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('History', { history })}>
+        <Text style={{ marginLeft: 10, color: '#fff', fontWeight: 'bold' }}>History</Text>
+      </TouchableOpacity>
+    ),
     headerRight: () => (
       <TouchableOpacity
         onPress={() =>
