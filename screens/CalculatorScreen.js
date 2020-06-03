@@ -172,14 +172,14 @@ const CalculatorScreen = ({ route, navigation }) => {
         />
         <View>
           <Button
-            style={styles.buttons}
+            buttonStyle={styles.buttons}
             title="Calculate"
             onPress={() => doCalculation(distanceUnits, bearingUnits)}
           />
         </View>
         <View>
           <Button
-            style={styles.buttons}
+            buttonStyle={styles.buttons}
             title="Clear"
             onPress={() => {
               Keyboard.dismiss();
@@ -216,11 +216,11 @@ const CalculatorScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-    backgroundColor: '#E8EAF6',
     flex: 1,
   },
   buttons: {
-    padding: 10,
+    backgroundColor: "#457D5A",
+    margin: 15
   },
   inputError: {
     color: 'red',

@@ -9,6 +9,17 @@ import HistoryScreen from './screens/HistoryScreen';
 const Stack = createStackNavigator();
 
 export default function App() {
+  const navStyling = {
+    headerStyle: {
+      backgroundColor: '#457D5A',
+    },
+    headerTintColor: '#fff',
+    headerTitleStyle: {
+      fontWeight: 'bold',
+    },
+    cardStyle: styles.container
+  }
+
   return (
 
     <NavigationContainer>
@@ -21,20 +32,10 @@ export default function App() {
   );
 }
 
-const navStyling = {
-  headerStyle: {
-    backgroundColor: '#0065A4',
-  },
-  headerTintColor: '#fff',
-  headerTitleStyle: {
-    fontWeight: 'bold',
-  },
-};
+
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    margin: 20,
-    flex: 1,
+    backgroundColor: '#b0e8c6',
   },
 });
