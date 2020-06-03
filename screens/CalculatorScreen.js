@@ -38,7 +38,7 @@ const CalculatorScreen = ({ route, navigation }) => {
   // Computes distance between two geo coordinates in kilometers.
   function computeDistance(lat1, lon1, lat2, lon2) {
     console.log(`p1={${lat1},${lon1}} p2={${lat2},${lon2}}`);
-    var R = 6371; // km (change this constant to get miles)
+    var R = 6371; 
     var dLat = ((lat2 - lat1) * Math.PI) / 180;
     var dLon = ((lon2 - lon1) * Math.PI) / 180;
     var a =
@@ -49,7 +49,6 @@ const CalculatorScreen = ({ route, navigation }) => {
         Math.sin(dLon / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c;
-    //return `${round(d, 3)}`;
     return d;
   }
 
@@ -183,7 +182,6 @@ const CalculatorScreen = ({ route, navigation }) => {
             style={styles.buttons}
             title="Clear"
             onPress={() => {
-              //initialField.current.focus();
               Keyboard.dismiss();
               setState({
                 lat1: '',
