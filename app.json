@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "GeoCalc",
-    "slug": "GeoCalc",
+    "name": "geo-calc",
+    "slug": "geo-calc",
     "platforms": [
       "ios",
       "android",
@@ -23,6 +23,7 @@
     ],
     "ios": {
       "supportsTablet": true
-    }
+    },
+    "description": ""
   }
 }
