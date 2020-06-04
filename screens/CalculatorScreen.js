@@ -1,8 +1,9 @@
-import React, { useState, useRef,   useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { StyleSheet, Text, Keyboard, TouchableOpacity, View, TouchableWithoutFeedback } from "react-native";
-import { Button, Input } from "react-native-elements";
+import { Button, Input, Image } from "react-native-elements";
 import { Feather } from "@expo/vector-icons";
 import { storeHistoryItem, setupHistoryListener, initHistoryDB } from '../helpers/fb-history';
+import { getWeather } from '../helpers/WeatherDataServer';
 
 const CalculatorScreen = ({ route, navigation }) => {
   const [state, setState] = useState({
@@ -16,19 +17,21 @@ const CalculatorScreen = ({ route, navigation }) => {
   const [history, setHistory] = useState([]);
   const [bearingUnits, setBearingUnits] = useState("Degrees");
   const [distanceUnits, setDistanceUnits] = useState("Kilometers");
+  const [sourceWeather, setSourceWeather] = useState("");
+  const [destWeather, setDestWeather] = useState("");
 
   const initialField = useRef(null);
 
-    useEffect(() => {
-      try {
-        initHistoryDB();
-      } catch (err) {
-        console.log(err);
-      }
-      setupHistoryListener((items) => {
-        setHistory(items);
-      });
-    }, []);
+  useEffect(() => {
+    try {
+      initHistoryDB();
+    } catch (err) {
+      console.log(err);
+    }
+    setupHistoryListener((items) => {
+      setHistory(items);
+    });
+  }, []);
 
   useEffect(() => {
     if (route.params?.selectedDistanceUnits) {
@@ -39,7 +42,7 @@ const CalculatorScreen = ({ route, navigation }) => {
     if (route.params?.selectedItem) {
       var p1 = route.params?.selectedItem.p1;
       var p2 = route.params?.selectedItem.p2;
-      setState({lat1: `${p1.lat}`, lon1: `${p1.lon}`, lat2: `${p2.lat}`, lon2: `${p2.lon}` });
+      setState({ lat1: `${p1.lat}`, lon1: `${p1.lon}`, lat2: `${p2.lat}`, lon2: `${p2.lon}` });
     }
   }, [route.params?.selectedDistanceUnits, route.params?.selectedItem]);
 
@@ -61,9 +64,9 @@ const CalculatorScreen = ({ route, navigation }) => {
     var a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c;
     //return `${round(d, 3)}`;
@@ -97,14 +100,24 @@ const CalculatorScreen = ({ route, navigation }) => {
   function formValid(vals) {
     if (isNaN(vals.lat1) || isNaN(vals.lon1) || isNaN(vals.lat2) || isNaN(vals.lon2)) {
       return false;
-    } else if (vals.lat1 === '' || vals.lon1 === '' || vals.lat2==='' || vals.lon2==='') {
+    } else if (vals.lat1 === '' || vals.lon1 === '' || vals.lat2 === '' || vals.lon2 === '') {
       return false;
     } else {
       return true;
     }
   }
 
-  function doCalculation(dUnits,bUnits) {
+  const constructWeatherData = (results) => {
+    const { description, icon } = results.weather[0];
+    const temperature = results.main.temp;
+    return {
+      icon,
+      description,
+      temperature
+    }
+  }
+
+  function doCalculation(dUnits, bUnits) {
     if (formValid(state)) {
       var p1 = {
         lat: parseFloat(state.lat1),
@@ -117,20 +130,28 @@ const CalculatorScreen = ({ route, navigation }) => {
 
       var dist = computeDistance(p1.lat, p1.lon, p2.lat, p2.lon);
       var bear = computeBearing(p1.lat, p1.lon, p2.lat, p2.lon);
-      const dConv = dUnits==='Kilometers' ? 1.0 :  0.621371;
+      const dConv = dUnits === 'Kilometers' ? 1.0 : 0.621371;
+
       const bConv = bUnits === 'Degrees' ? 1.0 : 17.777777777778;
       updateStateObject({
-        distance: `${round(dist*dConv,3)} ${dUnits}`,
-        bearing: `${round(bear*bConv, 3)} ${bUnits}`,
+        distance: `${round(dist * dConv, 3)} ${dUnits}`,
+        bearing: `${round(bear * bConv, 3)} ${bUnits}`,
       });
-      // setHistory([
-      //   ...history,
-      //   { p1, p2, dUnits, bUnits, timestamp: Date.now() },
-      // ]);
+
       storeHistoryItem({ p1, p2, dUnits, bUnits, timestamp: Date.now() });
 
+      getWeather(p1.lat, p1.lon, (results) => {
+        const weather = constructWeatherData(results);
+        setSourceWeather(weather)
+      })
+      
+      getWeather(p2.lat, p2.lon, (results) => {
+        const weather = constructWeatherData(results);
+        setDestWeather(weather)
+      })
     }
   }
+
 
   const updateStateObject = (vals) => {
     setState({
@@ -167,6 +188,46 @@ const CalculatorScreen = ({ route, navigation }) => {
       </TouchableOpacity>
     ),
   });
+
+  const ICONS = {
+    img01d: require('../assets/img01d.png'),
+    img01n: require('../assets/img01n.png'),
+    img02d: require('../assets/img02d.png'),
+    img02n: require('../assets/img02n.png'),
+    img03d: require('../assets/img03d.png'),
+    img03n: require('../assets/img03n.png'),
+    img04d: require('../assets/img04d.png'),
+    img04n: require('../assets/img04n.png'),
+    img09d: require('../assets/img09d.png'),
+    img09n: require('../assets/img09n.png'),
+    img10d: require('../assets/img10d.png'),
+    img10n: require('../assets/img10n.png'),
+    img13d: require('../assets/img13d.png'),
+    img13n: require('../assets/img13n.png'),
+    img50d: require('../assets/img13d.png'),
+    img50n: require('../assets/img13n.png'),
+  };
+
+  const renderWeather = (weather) => {
+    if (weather === '' || weather.icon === '') {
+      return <View></View>;
+    } else {
+      return (
+        <View style={styles.weatherView}>
+          <Image
+            style={{ width: 100, height: 100 }}
+            source={ICONS['img' + weather.icon]}
+          />
+          <View>
+            <Text style={{ fontSize: 56, fontWeight: 'bold' }}>
+              {round(weather.temperature, 0)}
+            </Text>
+            <Text> {weather.description} </Text>
+          </View>
+        </View>
+      );
+    }
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -214,7 +275,7 @@ const CalculatorScreen = ({ route, navigation }) => {
             title="Calculate"
             onPress={() => {
               doCalculation(distanceUnits, bearingUnits);
-              
+
             }}
           />
         </View>
@@ -249,6 +310,10 @@ const CalculatorScreen = ({ route, navigation }) => {
             </View>
             <Text style={styles.resultsValueText}>{state.bearing}</Text>
           </View>
+        </View>
+        <View>
+          {renderWeather(sourceWeather)}
+          {renderWeather(destWeather)}
         </View>
       </View>
     </TouchableWithoutFeedback>
