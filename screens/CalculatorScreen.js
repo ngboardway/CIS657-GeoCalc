@@ -365,6 +365,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
   },
+  weatherView: {
+    backgroundColor: '#aed8e4',
+    flexDirection: 'row',
+    marginTop: 15,
+    marginBottom: 15
+  }
 });
 
 export default CalculatorScreen;

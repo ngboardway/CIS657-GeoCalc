@@ -23,10 +23,11 @@ const HistoryScreen = ({ route, navigation }) => {
       keyExtractor={item => `${item.timestamp}`}
       data={currentHistory}
       ItemSeparatorComponent={FlatListItemSeparator}
-      renderItem={({index, item}) => {
+      renderItem={({ index, item }) => {
         var dt = Date(item.timestamp);
         return (
           <TouchableHighlight
+            underlayColor='#aed8e4'
             onPress={() => navigation.navigate('Geo Calculator', { selectedItem: item })}
           >
             <View style={styles.container}>
